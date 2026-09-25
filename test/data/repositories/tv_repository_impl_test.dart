@@ -158,6 +158,20 @@ void main() {
         equals(Left(ConnectionFailure('Failed to connect to the network'))),
       );
     });
+
+    test('should return ssl failure when the certificate is not trusted', () async {
+      // arrange
+      when(mockRemoteDataSource.getOnTheAirTVs())
+          .thenThrow(HandshakeException('CERTIFICATE_VERIFY_FAILED'));
+      // act
+      final result = await repository.getOnTheAirTVs();
+      // assert
+      verify(mockRemoteDataSource.getOnTheAirTVs());
+      expect(
+        result,
+        equals(Left(SSLFailure('Certificate verification failed'))),
+      );
+    });
   });
 
   group('Popular TVs', () {

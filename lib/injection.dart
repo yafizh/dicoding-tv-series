@@ -1,3 +1,4 @@
+import 'package:tv_series/common/ssl_pinning.dart';
 import 'package:tv_series/data/datasources/db/database_helper.dart';
 import 'package:tv_series/data/datasources/movie_local_data_source.dart';
 import 'package:tv_series/data/datasources/movie_remote_data_source.dart';
@@ -155,5 +156,5 @@ void init() {
   locator.registerLazySingleton<DatabaseHelper>(() => DatabaseHelper());
 
   // external
-  locator.registerLazySingleton(() => http.Client());
+  locator.registerLazySingleton<http.Client>(() => SslPinningClient());
 }
