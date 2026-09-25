@@ -1,0 +1,47 @@
+{
+    "page": 1,
+    "results": [
+        {
+            "backdrop_path": "/backdrop.jpg",
+            "first_air_date": "2011-04-17",
+            "genre_ids": [
+                10765,
+                18
+            ],
+            "id": 1399,
+            "name": "Game of Thrones",
+            "origin_country": [
+                "US"
+            ],
+            "original_language": "en",
+            "original_name": "Game of Thrones",
+            "overview": "Seven noble families fight for control of the mythical land of Westeros.",
+            "popularity": 369.594,
+            "poster_path": "/poster.jpg",
+            "vote_average": 8.3,
+            "vote_count": 11504
+        },
+        {
+            "backdrop_path": "/backdrop.jpg",
+            "first_air_date": "2011-04-17",
+            "genre_ids": [
+                10765,
+                18
+            ],
+            "id": 66732,
+            "name": "Stranger Things",
+            "origin_country": [
+                "US"
+            ],
+            "original_language": "en",
+            "original_name": "Stranger Things",
+            "overview": "Seven noble families fight for control of the mythical land of Westeros.",
+            "popularity": 369.594,
+            "poster_path": "/poster.jpg",
+            "vote_average": 8.3,
+            "vote_count": 11504
+        }
+    ],
+    "total_pages": 1,
+    "total_results": 2
+}
