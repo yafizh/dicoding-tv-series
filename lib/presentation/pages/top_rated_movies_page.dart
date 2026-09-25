@@ -1,8 +1,7 @@
-import 'package:tv_series/common/state_enum.dart';
-import 'package:tv_series/presentation/provider/top_rated_movies_notifier.dart';
+import 'package:tv_series/presentation/bloc/movie_list/movie_list_bloc.dart';
 import 'package:tv_series/presentation/widgets/movie_card_list.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class TopRatedMoviesPage extends StatefulWidget {
   static const routeName = '/top-rated-movie';
@@ -17,13 +16,7 @@ class _TopRatedMoviesPageState extends State<TopRatedMoviesPage> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      if (!mounted) return;
-      Provider.of<TopRatedMoviesNotifier>(
-        context,
-        listen: false,
-      ).fetchTopRatedMovies();
-    });
+    context.read<TopRatedMoviesBloc>().add(const FetchMovieList());
   }
 
   @override
@@ -32,24 +25,20 @@ class _TopRatedMoviesPageState extends State<TopRatedMoviesPage> {
       appBar: AppBar(title: Text('Top Rated Movies')),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Consumer<TopRatedMoviesNotifier>(
-          builder: (_, data, _) {
-            if (data.state == RequestState.loading) {
-              return Center(child: CircularProgressIndicator());
-            } else if (data.state == RequestState.loaded) {
-              return ListView.builder(
-                itemBuilder: (_, index) {
-                  final movie = data.movies[index];
-                  return MovieCard(movie);
-                },
-                itemCount: data.movies.length,
-              );
-            } else {
-              return Center(
+        child: BlocBuilder<TopRatedMoviesBloc, MovieListState>(
+          builder: (_, state) {
+            return switch (state) {
+              MovieListLoading() => Center(child: CircularProgressIndicator()),
+              MovieListHasData(:final movies) => ListView.builder(
+                itemBuilder: (_, index) => MovieCard(movies[index]),
+                itemCount: movies.length,
+              ),
+              MovieListError(:final message) => Center(
                 key: Key('error_message'),
-                child: Text(data.message),
-              );
-            }
+                child: Text(message),
+              ),
+              MovieListEmpty() => const SizedBox(),
+            };
           },
         ),
       ),

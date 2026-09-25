@@ -1,9 +1,9 @@
 import 'package:tv_series/common/constants.dart';
-import 'package:tv_series/common/state_enum.dart';
-import 'package:tv_series/presentation/provider/movie_search_notifier.dart';
+import 'package:tv_series/presentation/bloc/movie_list/movie_list_bloc.dart';
+import 'package:tv_series/presentation/bloc/movie_search/movie_search_bloc.dart';
 import 'package:tv_series/presentation/widgets/movie_card_list.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class SearchPage extends StatelessWidget {
   static const routeName = '/search';
@@ -21,10 +21,7 @@ class SearchPage extends StatelessWidget {
           children: [
             TextField(
               onSubmitted: (query) {
-                Provider.of<MovieSearchNotifier>(
-                  context,
-                  listen: false,
-                ).fetchMovieSearch(query);
+                context.read<MovieSearchBloc>().add(FetchMovieSearch(query));
               },
               decoration: InputDecoration(
                 hintText: 'Search title',
@@ -35,25 +32,21 @@ class SearchPage extends StatelessWidget {
             ),
             SizedBox(height: 16),
             Text('Search Result', style: heading6),
-            Consumer<MovieSearchNotifier>(
-              builder: (_, data, _) {
-                if (data.state == RequestState.loading) {
-                  return Center(child: CircularProgressIndicator());
-                } else if (data.state == RequestState.loaded) {
-                  final result = data.searchResult;
-                  return Expanded(
+            BlocBuilder<MovieSearchBloc, MovieListState>(
+              builder: (_, state) {
+                return switch (state) {
+                  MovieListLoading() => Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                  MovieListHasData(:final movies) => Expanded(
                     child: ListView.builder(
                       padding: const EdgeInsets.all(8),
-                      itemBuilder: (_, index) {
-                        final movie = data.searchResult[index];
-                        return MovieCard(movie);
-                      },
-                      itemCount: result.length,
+                      itemBuilder: (_, index) => MovieCard(movies[index]),
+                      itemCount: movies.length,
                     ),
-                  );
-                } else {
-                  return const Expanded(child: SizedBox());
-                }
+                  ),
+                  _ => const Expanded(child: SizedBox()),
+                };
               },
             ),
           ],

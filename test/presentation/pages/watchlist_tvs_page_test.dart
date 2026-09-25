@@ -1,35 +1,42 @@
-import 'package:tv_series/common/state_enum.dart';
-import 'package:tv_series/domain/entities/tv.dart';
-import 'package:tv_series/presentation/pages/watchlist_tvs_page.dart';
-import 'package:tv_series/presentation/provider/watchlist_tv_notifier.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
-import 'package:provider/provider.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:tv_series/domain/entities/tv.dart';
+import 'package:tv_series/presentation/bloc/tv_list/tv_list_bloc.dart';
+import 'package:tv_series/presentation/pages/watchlist_tvs_page.dart';
 
 import '../../dummy_data/dummy_objects.dart';
-import 'watchlist_tvs_page_test.mocks.dart';
+import '../../helpers/mock_blocs.dart';
 
-@GenerateMocks([WatchlistTVNotifier])
 void main() {
-  late MockWatchlistTVNotifier mockNotifier;
+  late MockWatchlistTVsBloc mockBloc;
 
   setUp(() {
-    mockNotifier = MockWatchlistTVNotifier();
+    mockBloc = MockWatchlistTVsBloc();
   });
 
   Widget makeTestableWidget(Widget body) {
-    return ChangeNotifierProvider<WatchlistTVNotifier>.value(
-      value: mockNotifier,
+    return BlocProvider<WatchlistTVsBloc>.value(
+      value: mockBloc,
       child: MaterialApp(home: body),
     );
   }
 
+  testWidgets('Page should fetch the list when opened', (
+    WidgetTester tester,
+  ) async {
+    when(() => mockBloc.state).thenReturn(const TVListEmpty());
+
+    await tester.pumpWidget(makeTestableWidget(WatchlistTVsPage()));
+
+    verify(() => mockBloc.add(const FetchTVList())).called(1);
+  });
+
   testWidgets('Page should display center progress bar when loading', (
     WidgetTester tester,
   ) async {
-    when(mockNotifier.watchlistState).thenReturn(RequestState.loading);
+    when(() => mockBloc.state).thenReturn(const TVListLoading());
 
     final progressBarFinder = find.byType(CircularProgressIndicator);
     final centerFinder = find.byType(Center);
@@ -43,8 +50,7 @@ void main() {
   testWidgets('Page should display ListView when data is loaded', (
     WidgetTester tester,
   ) async {
-    when(mockNotifier.watchlistState).thenReturn(RequestState.loaded);
-    when(mockNotifier.watchlistTVs).thenReturn(<TV>[]);
+    when(() => mockBloc.state).thenReturn(const TVListHasData(<TV>[]));
 
     final listViewFinder = find.byType(ListView);
 
@@ -56,8 +62,7 @@ void main() {
   testWidgets('Page should display saved tv series', (
     WidgetTester tester,
   ) async {
-    when(mockNotifier.watchlistState).thenReturn(RequestState.loaded);
-    when(mockNotifier.watchlistTVs).thenReturn(<TV>[testWatchlistTV]);
+    when(() => mockBloc.state).thenReturn(TVListHasData(<TV>[testWatchlistTV]));
 
     await tester.pumpWidget(makeTestableWidget(WatchlistTVsPage()));
 
@@ -67,13 +72,13 @@ void main() {
   testWidgets('Page should display text with message when Error', (
     WidgetTester tester,
   ) async {
-    when(mockNotifier.watchlistState).thenReturn(RequestState.error);
-    when(mockNotifier.message).thenReturn('Error message');
+    when(() => mockBloc.state).thenReturn(const TVListError('Error message'));
 
     final textFinder = find.byKey(Key('error_message'));
 
     await tester.pumpWidget(makeTestableWidget(WatchlistTVsPage()));
 
     expect(textFinder, findsOneWidget);
+    expect(find.text('Error message'), findsOneWidget);
   });
 }

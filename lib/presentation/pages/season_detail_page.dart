@@ -1,10 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:tv_series/common/constants.dart';
-import 'package:tv_series/common/state_enum.dart';
 import 'package:tv_series/domain/entities/episode.dart';
-import 'package:tv_series/presentation/provider/season_detail_notifier.dart';
+import 'package:tv_series/presentation/bloc/season_detail/season_detail_bloc.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class SeasonDetailPageArgs {
   final int tvId;
@@ -33,26 +32,20 @@ class _SeasonDetailPageState extends State<SeasonDetailPage> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      if (!mounted) return;
-      Provider.of<SeasonDetailNotifier>(
-        context,
-        listen: false,
-      ).fetchSeasonDetail(widget.tvId, widget.seasonNumber);
-    });
+    context.read<SeasonDetailBloc>().add(
+      FetchSeasonDetail(widget.tvId, widget.seasonNumber),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Season ${widget.seasonNumber}')),
-      body: Consumer<SeasonDetailNotifier>(
-        builder: (_, data, _) {
-          if (data.state == RequestState.loading) {
-            return Center(child: CircularProgressIndicator());
-          } else if (data.state == RequestState.loaded) {
-            final season = data.seasonDetail;
-            return ListView(
+      body: BlocBuilder<SeasonDetailBloc, SeasonDetailState>(
+        builder: (_, state) {
+          return switch (state) {
+            SeasonDetailLoading() => Center(child: CircularProgressIndicator()),
+            SeasonDetailHasData(seasonDetail: final season) => ListView(
               key: Key('episode_list'),
               padding: const EdgeInsets.all(16.0),
               children: [
@@ -65,10 +58,13 @@ class _SeasonDetailPageState extends State<SeasonDetailPage> {
                 SizedBox(height: 8),
                 ...season.episodes.map((episode) => _EpisodeTile(episode)),
               ],
-            );
-          } else {
-            return Center(key: Key('error_message'), child: Text(data.message));
-          }
+            ),
+            SeasonDetailError(:final message) => Center(
+              key: Key('error_message'),
+              child: Text(message),
+            ),
+            SeasonDetailEmpty() => const SizedBox(),
+          };
         },
       ),
     );

@@ -1,9 +1,9 @@
 import 'package:tv_series/common/constants.dart';
-import 'package:tv_series/common/state_enum.dart';
-import 'package:tv_series/presentation/provider/tv_search_notifier.dart';
+import 'package:tv_series/presentation/bloc/tv_list/tv_list_bloc.dart';
+import 'package:tv_series/presentation/bloc/tv_search/tv_search_bloc.dart';
 import 'package:tv_series/presentation/widgets/tv_card_list.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class SearchTVPage extends StatelessWidget {
   static const routeName = '/search-tv';
@@ -22,10 +22,7 @@ class SearchTVPage extends StatelessWidget {
             TextField(
               key: Key('query_input'),
               onSubmitted: (query) {
-                Provider.of<TVSearchNotifier>(
-                  context,
-                  listen: false,
-                ).fetchTVSearch(query);
+                context.read<TVSearchBloc>().add(FetchTVSearch(query));
               },
               decoration: InputDecoration(
                 hintText: 'Search title',
@@ -36,25 +33,19 @@ class SearchTVPage extends StatelessWidget {
             ),
             SizedBox(height: 16),
             Text('Search Result', style: heading6),
-            Consumer<TVSearchNotifier>(
-              builder: (_, data, _) {
-                if (data.state == RequestState.loading) {
-                  return Center(child: CircularProgressIndicator());
-                } else if (data.state == RequestState.loaded) {
-                  final result = data.searchResult;
-                  return Expanded(
+            BlocBuilder<TVSearchBloc, TVListState>(
+              builder: (_, state) {
+                return switch (state) {
+                  TVListLoading() => Center(child: CircularProgressIndicator()),
+                  TVListHasData(:final tvs) => Expanded(
                     child: ListView.builder(
                       padding: const EdgeInsets.all(8),
-                      itemBuilder: (_, index) {
-                        final tv = result[index];
-                        return TVCard(tv);
-                      },
-                      itemCount: result.length,
+                      itemBuilder: (_, index) => TVCard(tvs[index]),
+                      itemCount: tvs.length,
                     ),
-                  );
-                } else {
-                  return const Expanded(child: SizedBox());
-                }
+                  ),
+                  _ => const Expanded(child: SizedBox()),
+                };
               },
             ),
           ],

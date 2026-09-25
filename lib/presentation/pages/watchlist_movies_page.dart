@@ -1,9 +1,8 @@
-import 'package:tv_series/common/state_enum.dart';
 import 'package:tv_series/common/utils.dart';
-import 'package:tv_series/presentation/provider/watchlist_movie_notifier.dart';
+import 'package:tv_series/presentation/bloc/movie_list/movie_list_bloc.dart';
 import 'package:tv_series/presentation/widgets/movie_card_list.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class WatchlistMoviesPage extends StatefulWidget {
   static const routeName = '/watchlist-movie';
@@ -19,13 +18,7 @@ class _WatchlistMoviesPageState extends State<WatchlistMoviesPage>
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      if (!mounted) return;
-      Provider.of<WatchlistMovieNotifier>(
-        context,
-        listen: false,
-      ).fetchWatchlistMovies();
-    });
+    context.read<WatchlistMoviesBloc>().add(const FetchMovieList());
   }
 
   @override
@@ -36,10 +29,7 @@ class _WatchlistMoviesPageState extends State<WatchlistMoviesPage>
 
   @override
   void didPopNext() {
-    Provider.of<WatchlistMovieNotifier>(
-      context,
-      listen: false,
-    ).fetchWatchlistMovies();
+    context.read<WatchlistMoviesBloc>().add(const FetchMovieList());
   }
 
   @override
@@ -48,24 +38,20 @@ class _WatchlistMoviesPageState extends State<WatchlistMoviesPage>
       appBar: AppBar(title: Text('Watchlist')),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Consumer<WatchlistMovieNotifier>(
-          builder: (_, data, _) {
-            if (data.watchlistState == RequestState.loading) {
-              return Center(child: CircularProgressIndicator());
-            } else if (data.watchlistState == RequestState.loaded) {
-              return ListView.builder(
-                itemBuilder: (_, index) {
-                  final movie = data.watchlistMovies[index];
-                  return MovieCard(movie);
-                },
-                itemCount: data.watchlistMovies.length,
-              );
-            } else {
-              return Center(
+        child: BlocBuilder<WatchlistMoviesBloc, MovieListState>(
+          builder: (_, state) {
+            return switch (state) {
+              MovieListLoading() => Center(child: CircularProgressIndicator()),
+              MovieListHasData(:final movies) => ListView.builder(
+                itemBuilder: (_, index) => MovieCard(movies[index]),
+                itemCount: movies.length,
+              ),
+              MovieListError(:final message) => Center(
                 key: Key('error_message'),
-                child: Text(data.message),
-              );
-            }
+                child: Text(message),
+              ),
+              MovieListEmpty() => const SizedBox(),
+            };
           },
         ),
       ),

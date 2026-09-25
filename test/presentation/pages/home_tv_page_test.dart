@@ -1,37 +1,58 @@
-import 'package:tv_series/common/state_enum.dart';
-import 'package:tv_series/domain/entities/tv.dart';
-import 'package:tv_series/presentation/pages/home_tv_page.dart';
-import 'package:tv_series/presentation/provider/tv_list_notifier.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
-import 'package:provider/provider.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:tv_series/domain/entities/tv.dart';
+import 'package:tv_series/presentation/bloc/tv_list/tv_list_bloc.dart';
+import 'package:tv_series/presentation/pages/home_tv_page.dart';
 
 import '../../dummy_data/dummy_objects.dart';
-import 'home_tv_page_test.mocks.dart';
+import '../../helpers/mock_blocs.dart';
 
-@GenerateMocks([TVListNotifier])
 void main() {
-  late MockTVListNotifier mockNotifier;
+  late MockOnTheAirTVsBloc mockOnTheAirBloc;
+  late MockPopularTVsBloc mockPopularBloc;
+  late MockTopRatedTVsBloc mockTopRatedBloc;
 
   setUp(() {
-    mockNotifier = MockTVListNotifier();
+    mockOnTheAirBloc = MockOnTheAirTVsBloc();
+    mockPopularBloc = MockPopularTVsBloc();
+    mockTopRatedBloc = MockTopRatedTVsBloc();
   });
 
   Widget makeTestableWidget(Widget body) {
-    return ChangeNotifierProvider<TVListNotifier>.value(
-      value: mockNotifier,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<OnTheAirTVsBloc>.value(value: mockOnTheAirBloc),
+        BlocProvider<PopularTVsBloc>.value(value: mockPopularBloc),
+        BlocProvider<TopRatedTVsBloc>.value(value: mockTopRatedBloc),
+      ],
       child: MaterialApp(home: body),
     );
   }
 
+  void arrangeState(TVListState state) {
+    when(() => mockOnTheAirBloc.state).thenReturn(state);
+    when(() => mockPopularBloc.state).thenReturn(state);
+    when(() => mockTopRatedBloc.state).thenReturn(state);
+  }
+
+  testWidgets('Page should fetch every section when opened', (
+    WidgetTester tester,
+  ) async {
+    arrangeState(const TVListEmpty());
+
+    await tester.pumpWidget(makeTestableWidget(HomeTVPage()));
+
+    verify(() => mockOnTheAirBloc.add(const FetchTVList())).called(1);
+    verify(() => mockPopularBloc.add(const FetchTVList())).called(1);
+    verify(() => mockTopRatedBloc.add(const FetchTVList())).called(1);
+  });
+
   testWidgets('Page should display a progress bar per section when loading', (
     WidgetTester tester,
   ) async {
-    when(mockNotifier.onTheAirState).thenReturn(RequestState.loading);
-    when(mockNotifier.popularTVsState).thenReturn(RequestState.loading);
-    when(mockNotifier.topRatedTVsState).thenReturn(RequestState.loading);
+    arrangeState(const TVListLoading());
 
     await tester.pumpWidget(makeTestableWidget(HomeTVPage()));
 
@@ -41,12 +62,7 @@ void main() {
   testWidgets('Page should display the three sections when data is loaded', (
     WidgetTester tester,
   ) async {
-    when(mockNotifier.onTheAirState).thenReturn(RequestState.loaded);
-    when(mockNotifier.onTheAirTVs).thenReturn(<TV>[testTV]);
-    when(mockNotifier.popularTVsState).thenReturn(RequestState.loaded);
-    when(mockNotifier.popularTVs).thenReturn(<TV>[testTV]);
-    when(mockNotifier.topRatedTVsState).thenReturn(RequestState.loaded);
-    when(mockNotifier.topRatedTVs).thenReturn(<TV>[testTV]);
+    arrangeState(TVListHasData(<TV>[testTV]));
 
     await tester.pumpWidget(makeTestableWidget(HomeTVPage()));
 
@@ -59,9 +75,7 @@ void main() {
   testWidgets('Page should display Failed when a section errors', (
     WidgetTester tester,
   ) async {
-    when(mockNotifier.onTheAirState).thenReturn(RequestState.error);
-    when(mockNotifier.popularTVsState).thenReturn(RequestState.error);
-    when(mockNotifier.topRatedTVsState).thenReturn(RequestState.error);
+    arrangeState(const TVListError('Server Failure'));
 
     await tester.pumpWidget(makeTestableWidget(HomeTVPage()));
 

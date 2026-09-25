@@ -1,16 +1,15 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:tv_series/common/constants.dart';
-import 'package:tv_series/common/state_enum.dart';
 import 'package:tv_series/domain/entities/tv.dart';
 import 'package:tv_series/presentation/pages/on_the_air_tvs_page.dart';
 import 'package:tv_series/presentation/pages/popular_tvs_page.dart';
 import 'package:tv_series/presentation/pages/search_tv_page.dart';
 import 'package:tv_series/presentation/pages/top_rated_tvs_page.dart';
 import 'package:tv_series/presentation/pages/tv_detail_page.dart';
-import 'package:tv_series/presentation/provider/tv_list_notifier.dart';
+import 'package:tv_series/presentation/bloc/tv_list/tv_list_bloc.dart';
 import 'package:tv_series/presentation/widgets/app_drawer.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class HomeTVPage extends StatefulWidget {
   static const routeName = '/home-tv';
@@ -25,13 +24,9 @@ class _HomeTVPageState extends State<HomeTVPage> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      if (!mounted) return;
-      Provider.of<TVListNotifier>(context, listen: false)
-        ..fetchOnTheAirTVs()
-        ..fetchPopularTVs()
-        ..fetchTopRatedTVs();
-    });
+    context.read<OnTheAirTVsBloc>().add(const FetchTVList());
+    context.read<PopularTVsBloc>().add(const FetchTVList());
+    context.read<TopRatedTVsBloc>().add(const FetchTVList());
   }
 
   @override
@@ -64,17 +59,8 @@ class _HomeTVPageState extends State<HomeTVPage> {
                   );
                 },
               ),
-              Consumer<TVListNotifier>(
-                builder: (_, data, _) {
-                  final state = data.onTheAirState;
-                  if (state == RequestState.loading) {
-                    return Center(child: CircularProgressIndicator());
-                  } else if (state == RequestState.loaded) {
-                    return TVList(data.onTheAirTVs);
-                  } else {
-                    return Text('Failed');
-                  }
-                },
+              BlocBuilder<OnTheAirTVsBloc, TVListState>(
+                builder: (_, state) => _buildTVList(state),
               ),
               _buildSubHeading(
                 title: 'Popular',
@@ -82,17 +68,8 @@ class _HomeTVPageState extends State<HomeTVPage> {
                   return Navigator.pushNamed(context, PopularTVsPage.routeName);
                 },
               ),
-              Consumer<TVListNotifier>(
-                builder: (_, data, _) {
-                  final state = data.popularTVsState;
-                  if (state == RequestState.loading) {
-                    return Center(child: CircularProgressIndicator());
-                  } else if (state == RequestState.loaded) {
-                    return TVList(data.popularTVs);
-                  } else {
-                    return Text('Failed');
-                  }
-                },
+              BlocBuilder<PopularTVsBloc, TVListState>(
+                builder: (_, state) => _buildTVList(state),
               ),
               _buildSubHeading(
                 title: 'Top Rated',
@@ -103,23 +80,22 @@ class _HomeTVPageState extends State<HomeTVPage> {
                   );
                 },
               ),
-              Consumer<TVListNotifier>(
-                builder: (_, data, _) {
-                  final state = data.topRatedTVsState;
-                  if (state == RequestState.loading) {
-                    return Center(child: CircularProgressIndicator());
-                  } else if (state == RequestState.loaded) {
-                    return TVList(data.topRatedTVs);
-                  } else {
-                    return Text('Failed');
-                  }
-                },
+              BlocBuilder<TopRatedTVsBloc, TVListState>(
+                builder: (_, state) => _buildTVList(state),
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildTVList(TVListState state) {
+    return switch (state) {
+      TVListLoading() => Center(child: CircularProgressIndicator()),
+      TVListHasData(:final tvs) => TVList(tvs),
+      _ => Text('Failed'),
+    };
   }
 
   Row _buildSubHeading({required String title, required Function() onTap}) {
