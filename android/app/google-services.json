@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "405753167019",
+    "project_id": "location-tracker-4ef06",
+    "storage_bucket": "location-tracker-4ef06.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:405753167019:android:7c047a5c174ed09c4c8bee",
+        "android_client_info": {
+          "package_name": "com.aaddev.my_loc"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAN8Da-fWrmHXLqUHmXxrwY83ZZPwedhn0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:405753167019:android:2cc1880ef797d3da4c8bee",
+        "android_client_info": {
+          "package_name": "com.android.application"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAN8Da-fWrmHXLqUHmXxrwY83ZZPwedhn0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:405753167019:android:6bef9ccc872c18f34c8bee",
+        "android_client_info": {
+          "package_name": "com.example.tv_series"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAN8Da-fWrmHXLqUHmXxrwY83ZZPwedhn0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

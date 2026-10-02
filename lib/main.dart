@@ -1,3 +1,5 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +8,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:tv_series/common/constants.dart';
 import 'package:tv_series/common/utils.dart';
+import 'package:tv_series/firebase_options.dart';
 import 'package:tv_series/presentation/pages/about_page.dart';
 import 'package:tv_series/presentation/pages/home_movie_page.dart';
 import 'package:tv_series/presentation/pages/home_tv_page.dart';
@@ -30,9 +33,17 @@ import 'package:tv_series/presentation/bloc/tv_list/tv_list_bloc.dart';
 import 'package:tv_series/presentation/bloc/tv_search/tv_search_bloc.dart';
 import 'package:tv_series/injection.dart' as di;
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   if (kIsWeb) {
     databaseFactory = databaseFactoryFfiWeb;
+  } else {
+    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
   }
   di.init();
   runApp(MyApp());
